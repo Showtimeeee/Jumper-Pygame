@@ -19,7 +19,7 @@ scroll_thresh = 200
 # gravitation
 gravity = 1
 
-max_platforms = 30
+max_platforms = 10
 
 # scroll line
 scroll = 0
@@ -37,7 +37,7 @@ platform_image = pg.image.load('images/wood111z.png').convert_alpha()
 # drawing background
 def draw_bg(bg_scroll):
     screen.blit(bg_image, (0, 0 + bg_scroll))
-    screen.blit(bg_image, (0, -200 + bg_scroll))
+    screen.blit(bg_image, (0, -300 + bg_scroll))
 
 
 class Player:
@@ -91,6 +91,7 @@ class Player:
 
         # if coll plyaer to floor
         if self.rect.top <= scroll_thresh:
+            # if jump
             if self.vel_y < 0:
                 scroll = -dy
 
@@ -120,6 +121,9 @@ class Platform(pg.sprite.Sprite):
     def update(self, scroll):
 
         self.rect.y += scroll
+        # if platform gone to screen
+        if self.rect.top > HEIGHT:
+            self.kill()
 
 
 
@@ -129,12 +133,15 @@ jumper = Player(WIDTH // 2, HEIGHT - 150)
 platform_group = pg.sprite.Group()
 
 # going platform
-for pl in range(max_platforms):
-    p_w = random.randint(40, 60)
-    p_x = random.randint(0, WIDTH - p_w)
-    p_y = pl * random.randint(80, 120)
-    platform = Platform(p_x, p_y, p_w)
-    platform_group.add(platform)
+# for pl in range(max_platforms):
+#     p_w = random.randint(40, 60)
+#     p_x = random.randint(0, WIDTH - p_w)
+#     p_y = pl * random.randint(80, 120)
+#     platform = Platform(p_x, p_y, p_w)
+#     platform_group.add(platform)
+
+platform = Platform(WIDTH // 2, HEIGHT - 50, 80)
+platform_group.add(platform)
 
 
 run = True
@@ -144,13 +151,26 @@ while run:
 
     scroll = jumper.move()
 
+
     # draw background
     bg_scroll += scroll
     if bg_scroll >= 600:
         bg_scroll = 0
     draw_bg(bg_scroll)
 
-    draw_bg(scroll)
+    # add platforms, size, location
+    if len(platform_group) < max_platforms:
+        p_w = random.randint(40, 60)
+        p_x = random.randint(0, WIDTH - p_w)
+        p_y = platform.rect.y - random.randint(80, 120)
+        platform = Platform(p_x, p_y, p_w)
+        platform_group.add(platform)
+
+    # print(len(platform_group))
+
+    # print(bg_scroll)
+
+
 
     # scroll white line
     pg.draw.line(screen, white_color, (0, scroll_thresh), (WIDTH, scroll_thresh))
