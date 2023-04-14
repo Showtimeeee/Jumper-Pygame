@@ -28,6 +28,7 @@ scroll = 0
 bg_scroll = 0
 
 # colors
+game_color = (95, 10, 110)
 white_color = (255, 255, 255)
 black_color = (0, 0, 0)
 purple_color = (185, 37, 156)
@@ -63,8 +64,8 @@ def draw_text(text, font, text_col, x, y):
 
 def score_panel():
     pg.draw.rect(screen, purple_color, (0, 0, WIDTH, 30))
-    pg.draw.line(screen, white_color, (0, 30), (WIDTH, 30), 2)
-    draw_text('Score: ' + str(score), font_big, white_color, 0, 0)
+    pg.draw.line(screen, game_color, (0, 30), (WIDTH, 30), 2)
+    draw_text('Score: ' + str(score), font_big, game_color, 0, 0)
 
 
 # drawing background
@@ -143,15 +144,28 @@ class Player:
 
 class Platform(pg.sprite.Sprite):
 
-    def __init__(self, x, y, width):
+    def __init__(self, x, y, width, moving):
         pg.sprite.Sprite.__init__(self)
         self.image = pg.transform.scale(platform_image, (width, 10))
+        self.moving = moving
+        self.move_counter = random.randint(0, 50)
+        self.direction = random.choice([-1, 1])
+        self.speed = random.randint(1, 2)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
 
     # update platform pos
     def update(self, scroll):
+        # moving platform
+        if self.moving == True:
+            self.move_counter += 1
+            self.rect.x += self.direction * self.speed
+
+        # platform direction if moved
+        if self.move_counter >= 100 or self.rect.left < 0 or self.rect.right > WIDTH:
+            self.direction *= -1
+            self.move_counter = 0
 
         self.rect.y += scroll
         # if platform gone to screen
@@ -172,7 +186,7 @@ platform_group = pg.sprite.Group()
 #     platform = Platform(p_x, p_y, p_w)
 #     platform_group.add(platform)
 
-platform = Platform(WIDTH // 2, HEIGHT - 50, 80)
+platform = Platform(WIDTH // 2, HEIGHT - 50, 80, False)
 platform_group.add(platform)
 
 run = True
@@ -193,8 +207,14 @@ while run:
         if len(platform_group) < max_platforms:
             p_w = random.randint(40, 60)
             p_x = random.randint(0, WIDTH - p_w)
-            p_y = platform.rect.y - random.randint(80, 120)
-            platform = Platform(p_x, p_y, p_w)
+            # moving platform
+            p_type = random.randint(1, 2)
+            if p_type == 1 and score > 500:
+                p_moving = True
+            else:
+                p_moving = False
+            p_y = platform.rect. y - random.randint(80, 120)
+            platform = Platform(p_x, p_y, p_w, p_moving)
             platform_group.add(platform)
 
         # scroll white line
@@ -246,7 +266,7 @@ while run:
             # reset platforms
             platform_group.empty()
             # add new platforms
-            platform = Platform(WIDTH // 2 - 50, HEIGHT - 50, 100)
+            platform = Platform(WIDTH // 2 - 50, HEIGHT - 50, 100, 0)
             platform_group.add(platform)
 
 
