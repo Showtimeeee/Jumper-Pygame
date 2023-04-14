@@ -1,5 +1,6 @@
 import pygame as pg
 import random
+import os
 
 pg.init()
 
@@ -26,25 +27,57 @@ scroll = 0
 
 bg_scroll = 0
 
+# colors
 white_color = (255, 255, 255)
+black_color = (0, 0, 0)
+purple_color = (185, 37, 156)
 
+# font
+font_mini = pg.font.SysFont('Open Sans', 30)
+font_big = pg.font.SysFont('Monaco', 50)
+#
+game_over = False
+
+# start score
+score = 0
+
+# hight scrore
+hight_scrore = 0
+
+# file to score
+if os.path.exists('score.txt'):
+    with open('score.txt', 'r') as file:
+        hight_scrore = int(file.read())
+else:
+    hight_scrore = 0
 
 player_image = pg.image.load('images/playerb5.png').convert_alpha()
 bg_image = pg.image.load('images/bgvektor.jpg').convert_alpha()
 platform_image = pg.image.load('images/wood111z.png').convert_alpha()
 
 
+def draw_text(text, font, text_col, x, y):
+    img = font.render(text, True, text_col)
+    screen.blit(img, (x, y))
+
+
+def score_panel():
+    pg.draw.rect(screen, purple_color, (0, 0, WIDTH, 30))
+    pg.draw.line(screen, white_color, (0, 30), (WIDTH, 30), 2)
+    draw_text('Score: ' + str(score), font_big, white_color, 0, 0)
+
+
 # drawing background
 def draw_bg(bg_scroll):
     screen.blit(bg_image, (0, 0 + bg_scroll))
-    screen.blit(bg_image, (0, -300 + bg_scroll))
+    screen.blit(bg_image, (0, -200))
 
 
 class Player:
     def __init__(self, x, y):
         # shape, size player
         self.image = pg.transform.scale(player_image, (45, 60))
-        self.width = 45
+        self.width = 40
         self.height = 60
         self.rect = pg.Rect(0, 0, self.width, self.height)
         self.rect.center = (x, y)
@@ -85,9 +118,9 @@ class Player:
                         self.vel_y = -20
 
         # collision floor
-        if self.rect.bottom + dy > HEIGHT:
-            dy = 0
-            self.vel_y = -20
+        # if self.rect.bottom + dy > HEIGHT:
+        #     dy = 0
+        #     self.vel_y = -20
 
         # if coll plyaer to floor
         if self.rect.top <= scroll_thresh:
@@ -126,7 +159,6 @@ class Platform(pg.sprite.Sprite):
             self.kill()
 
 
-
 jumper = Player(WIDTH // 2, HEIGHT - 150)
 
 # platform sprite
@@ -143,44 +175,80 @@ platform_group = pg.sprite.Group()
 platform = Platform(WIDTH // 2, HEIGHT - 50, 80)
 platform_group.add(platform)
 
-
 run = True
 while run:
 
     clock.tick(fps)
 
-    scroll = jumper.move()
+    if game_over == False:
+        scroll = jumper.move()
 
+        # draw background
+        bg_scroll += scroll
+        if bg_scroll >= 600:
+            bg_scroll = 0
+        draw_bg(bg_scroll)
 
-    # draw background
-    bg_scroll += scroll
-    if bg_scroll >= 600:
-        bg_scroll = 0
-    draw_bg(bg_scroll)
+        # add platforms, size, location
+        if len(platform_group) < max_platforms:
+            p_w = random.randint(40, 60)
+            p_x = random.randint(0, WIDTH - p_w)
+            p_y = platform.rect.y - random.randint(80, 120)
+            platform = Platform(p_x, p_y, p_w)
+            platform_group.add(platform)
 
-    # add platforms, size, location
-    if len(platform_group) < max_platforms:
-        p_w = random.randint(40, 60)
-        p_x = random.randint(0, WIDTH - p_w)
-        p_y = platform.rect.y - random.randint(80, 120)
-        platform = Platform(p_x, p_y, p_w)
-        platform_group.add(platform)
+        # scroll white line
+        # pg.draw.line(screen, white_color, (0, scroll_thresh), (WIDTH, scroll_thresh))
 
-    # print(len(platform_group))
+        # update platform
+        platform_group.update(scroll)
 
-    # print(bg_scroll)
+        # +score
+        if scroll > 0:
+            score += scroll
+        print(score)
 
+        # draw sprites
+        platform_group.draw(screen)
+        jumper.draw()
 
+        # draw score
+        score_panel()
 
-    # scroll white line
-    pg.draw.line(screen, white_color, (0, scroll_thresh), (WIDTH, scroll_thresh))
+        # if game over
+        if jumper.rect.top > HEIGHT:
+            game_over = True
 
-    # update platform
-    platform_group.update(scroll)
+        print(game_over)
 
-    # draw sprites
-    platform_group.draw(screen)
-    jumper.draw()
+    else:
+        draw_text('Score: ' + str(score), font_big, white_color,140, 50 )
+        draw_text('Game Over', font_big, white_color, 140, 100)
+
+        draw_text('Press SPACE', font_big, white_color, 120, 350 )
+
+        # update records write file
+        if score > hight_scrore:
+            hight_scrore = score
+
+            with open('score.txt', 'w') as file:
+                file.write(str(hight_scrore))
+                print(hight_scrore)
+
+        # if game over press SPACE
+        key = pg.key.get_pressed()
+        if key[pg.K_SPACE]:
+            # reset
+            game_over = False
+            score = 0
+            scroll = 0
+            jumper.rect.center = (WIDTH // 2, HEIGHT - 100)
+            # reset platforms
+            platform_group.empty()
+            # add new platforms
+            platform = Platform(WIDTH // 2 - 50, HEIGHT - 50, 100)
+            platform_group.add(platform)
+
 
     for event in pg.event.get():
         if event.type == pg.QUIT:
