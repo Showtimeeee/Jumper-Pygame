@@ -7,6 +7,7 @@ from pygame import mixer
 mixer.init()
 pg.init()
 
+
 WIDTH = 500
 HEIGHT = 700
 
