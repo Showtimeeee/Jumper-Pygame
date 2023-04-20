@@ -2,6 +2,7 @@ import pygame as pg
 import random
 import os
 from pygame import mixer
+import json
 
 
 mixer.init()
@@ -59,9 +60,9 @@ score = 0
 hight_scrore = 0
 
 # file to score
-if os.path.exists('score.txt'):
-    with open('score.txt', 'r') as file:
-        hight_scrore = int(file.read())
+if os.path.exists('score_j.txt'):
+    with open('score_j.txt', 'r') as file:
+        hight_scrore = json.load(file)
 else:
     hight_scrore = 0
 
@@ -239,9 +240,9 @@ while run:
         # update records write file
         if score > hight_scrore:
             hight_scrore = score
-            # write file scrore
-            with open('score.txt', 'w') as file:
-                file.write(str(hight_scrore))
+
+            with open('score_j.txt', 'w') as file:
+                json.dump(hight_scrore, file)
 
         # if game over press SPACE
         key = pg.key.get_pressed()
